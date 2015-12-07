@@ -188,3 +188,5 @@ for epoch = 1:maxepoch
  	save mnistclassify_error test_err test_crerr train_err train_crerr;
 
 end
+
+fprintf('%s\n', datestr(now));
