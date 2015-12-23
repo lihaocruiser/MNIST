@@ -20,17 +20,21 @@
 clear all
 close all
 
-numhid = 1024;
-numpen = 1024;
-numpen2 = 1024;
-uselogistic = 0;
+maxepoch = 50;
+numhid = 512; numpen = 512; numpen2 = 512;
+
+%%%%%%%%%% Config For Makebatches %%%%%%%%%%
+mfccFileName = 'dr1.mat';
+batchSize = 100;
 
 makebatches;
 [numcases numdims numbatches]=size(batchdata);
 
+fprintf(1,'Pretraining. Max epoch %d.\n', maxepoch);
+
 fprintf(1,'Pretraining Layer 1 with RBM: %d-%d \n',numdims,numhid);
 restart=1;
-rbmvislinear;
+rbm;
 hidrecbiases=hidbiases; 
 save mnistvhclassify vishid hidrecbiases visbiases;
 

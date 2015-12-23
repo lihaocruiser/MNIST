@@ -55,53 +55,53 @@ if restart ==1,
 end
 
 for epoch = epoch:maxepoch,
-    fprintf(1,'epoch %d\r',epoch); 
-    errsum=0;
+ fprintf(1,'epoch %d\r',epoch); 
+ errsum=0;
 
-    for batch = 1:numbatches,
-        fprintf(1,'epoch %d batch %d\r',epoch,batch);
+ for batch = 1:numbatches,
+ fprintf(1,'epoch %d batch %d\r',epoch,batch);
 
-        %%%%%%%%% START POSITIVE PHASE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        data = batchdata(:,:,batch);
-        poshidprobs =  (data*vishid) + repmat(hidbiases,numcases,1);
-        batchposhidprobs(:,:,batch)=poshidprobs;
-        posprods    = data' * poshidprobs;
-        poshidact   = sum(poshidprobs);
-        posvisact = sum(data);
+%%%%%%%%% START POSITIVE PHASE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  data = batchdata(:,:,batch);
+  poshidprobs =  (data*vishid) + repmat(hidbiases,numcases,1);
+  batchposhidprobs(:,:,batch)=poshidprobs;
+  posprods    = data' * poshidprobs;
+  poshidact   = sum(poshidprobs);
+  posvisact = sum(data);
+  
+%%%%%%%%% END OF POSITIVE PHASE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+poshidstates = poshidprobs+randn(numcases,numhid);
 
-        %%%%%%%%% END OF POSITIVE PHASE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        poshidstates = poshidprobs+randn(numcases,numhid);
+%%%%%%%%% START NEGATIVE PHASE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  negdata = 1./(1 + exp(-poshidstates*vishid' - repmat(visbiases,numcases,1)));
+  neghidprobs = (negdata*vishid) + repmat(hidbiases,numcases,1);
+  negprods  = negdata'*neghidprobs;
+  neghidact = sum(neghidprobs);
+  negvisact = sum(negdata); 
 
-        %%%%%%%%% START NEGATIVE PHASE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        negdata = 1./(1 + exp(-poshidstates*vishid' - repmat(visbiases,numcases,1)));
-        neghidprobs = (negdata*vishid) + repmat(hidbiases,numcases,1);
-        negprods  = negdata'*neghidprobs;
-        neghidact = sum(neghidprobs);
-        negvisact = sum(negdata); 
-
-        %%%%%%%%% END OF NEGATIVE PHASE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%% END OF NEGATIVE PHASE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-        err= sum(sum( (data-negdata).^2 )); 
-        errsum = err + errsum;
-        if epoch>5,
-        	momentum=finalmomentum;
-        else
-        	momentum=initialmomentum;
-        end;
+  err= sum(sum( (data-negdata).^2 )); 
+  errsum = err + errsum;
+   if epoch>5,
+     momentum=finalmomentum;
+   else
+     momentum=initialmomentum;
+   end;
 
-        %%%%%%%%% UPDATE WEIGHTS AND BIASES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        vishidinc = momentum*vishidinc + ...
-                    epsilonw*( (posprods-negprods)/numcases - weightcost*vishid);
-        visbiasinc = momentum*visbiasinc + (epsilonvb/numcases)*(posvisact-negvisact);
-        hidbiasinc = momentum*hidbiasinc + (epsilonhb/numcases)*(poshidact-neghidact);
-        vishid = vishid + vishidinc;
-        visbiases = visbiases + visbiasinc;
-        hidbiases = hidbiases + hidbiasinc;
+%%%%%%%%% UPDATE WEIGHTS AND BIASES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    vishidinc = momentum*vishidinc + ...
+                epsilonw*( (posprods-negprods)/numcases - weightcost*vishid);
+    visbiasinc = momentum*visbiasinc + (epsilonvb/numcases)*(posvisact-negvisact);
+    hidbiasinc = momentum*hidbiasinc + (epsilonhb/numcases)*(poshidact-neghidact);
+    vishid = vishid + vishidinc;
+    visbiases = visbiases + visbiasinc;
+    hidbiases = hidbiases + hidbiasinc;
 
-        %%%%%%%%%%%%%%%% END OF UPDATES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% END OF UPDATES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    end
-    fprintf(1, 'epoch %4i error %f \n', epoch, errsum);
+ end
+fprintf(1, 'epoch %4i error %f \n', epoch, errsum);
 
 end

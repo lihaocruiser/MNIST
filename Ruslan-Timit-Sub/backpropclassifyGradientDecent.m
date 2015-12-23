@@ -5,7 +5,7 @@
 % Substitution for backpropclassify.m
 % Using mini-batch gradient decent.
 
-maxepoch = 50;
+maxepoch = 200;
 
 load mnistvhclassify
 load mnisthpclassify
@@ -14,13 +14,16 @@ load mnisthp2classify
 makebatches;
 [numcases numdims numbatches]=size(batchdata);
 N=numcases; 
+speakerNum = size(batchtargets, 2);
 
-algorithm = 'SGD';
-combineFactor = 10;
-trainBatchNum = numbatches / combineFactor;
-trainBatchSize = 60000 / trainBatchNum;
+algorithm = 'CGD';  % CGD or SGD
+holdNum = 5;        % First update top-level weights holding other weights fixed. 
+eta = [1 1 0.5 0.2] * 10;
+combineFactor = 1;
+trainBatchNum = floor(numbatches / combineFactor);
+trainBatchSize = numcases;
 
-fprintf(1,'Training discriminative model on MNIST by minimizing cross entropy error. \n');
+fprintf(1,'Training discriminative model on TIMIT by minimizing cross entropy error. \n');
 fprintf(1,'%s, %d batches of %d cases each. \n', algorithm, trainBatchNum, trainBatchSize);
 
 %%%% PREINITIALIZE WEIGHTS OF THE DISCRIMINATIVE MODEL%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -28,7 +31,7 @@ fprintf(1,'%s, %d batches of %d cases each. \n', algorithm, trainBatchNum, train
 w1=[vishid; hidrecbiases];
 w2=[hidpen; penrecbiases];
 w3=[hidpen2; penrecbiases2];
-w_class = 0.1*randn(size(w3,2)+1,10);
+w_class = 0.1*randn(size(w3,2)+1, speakerNum);
  
 
 %%%%%%%%%% END OF PREINITIALIZATIO OF WEIGHTS  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -37,11 +40,10 @@ l1=size(w1,1)-1;
 l2=size(w2,1)-1;
 l3=size(w3,1)-1;
 l4=size(w_class,1)-1;
-l5=10; 
+l5=speakerNum; 
 test_err=[];
 train_err=[];
 
-eta = [1 1 0.5 0.2] * 20;
 
 for epoch = 1:maxepoch
 
@@ -59,7 +61,7 @@ for epoch = 1:maxepoch
         w2probs = 1./(1 + exp(-w1probs*w2)); w2probs = [w2probs ones(N,1)];
         w3probs = 1./(1 + exp(-w2probs*w3)); w3probs = [w3probs  ones(N,1)];
         targetout = exp(w3probs*w_class);
-        targetout = targetout./repmat(sum(targetout,2),1,10);
+        targetout = targetout./repmat(sum(targetout,2),1,speakerNum);
 
         [I J] = max(targetout,[],2);
         [I1 J1] = max(target,[],2);
@@ -85,7 +87,7 @@ for epoch = 1:maxepoch
         w2probs = 1./(1 + exp(-w1probs*w2)); w2probs = [w2probs ones(N,1)];
         w3probs = 1./(1 + exp(-w2probs*w3)); w3probs = [w3probs  ones(N,1)];
         targetout = exp(w3probs*w_class);
-        targetout = targetout./repmat(sum(targetout,2),1,10);
+        targetout = targetout./repmat(sum(targetout,2),1,speakerNum);
 
         [I J]=max(targetout,[],2);
         [I1 J1]=max(target,[],2);
@@ -116,7 +118,7 @@ for epoch = 1:maxepoch
 
         %%%%%%%%%%%%%%% PERFORM STOCHASTIC GRADIENT DECENT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if (strcmp(algorithm,'SGD'))
-            if epoch<=5
+            if epoch<=holdNum
                 N = size(data,1);
                 XX = [data ones(N,1)];
                 w1probs = 1./(1 + exp(-XX*w1)); w1probs = [w1probs  ones(N,1)];
@@ -124,7 +126,7 @@ for epoch = 1:maxepoch
                 w3probs = 1./(1 + exp(-w2probs*w3)); w3probs = [w3probs ones(N,1)];
 
                 targetout = exp(w3probs*w_class);
-                targetout = targetout./repmat(sum(targetout,2),1,10);
+                targetout = targetout./repmat(sum(targetout,2),1,speakerNum);
 
                 delta4 = targetout - targets;
                 w_class = w_class - eta(4) / trainBatchSize * w3probs' * delta4;
@@ -136,7 +138,7 @@ for epoch = 1:maxepoch
                 w3probs = 1./(1 + exp(-w2probs*w3)); w3probs = [w3probs ones(N,1)];
 
                 targetout = exp(w3probs*w_class);
-                targetout = targetout./repmat(sum(targetout,2),1,10);
+                targetout = targetout./repmat(sum(targetout,2),1,speakerNum);
 
                 delta4 = targetout - targets;
                 delta3 = delta4 * w_class' .* romsigmoidy(w3probs); delta3 = delta3(:,1:end-1);
@@ -154,7 +156,7 @@ for epoch = 1:maxepoch
         %%%%%%%%%%%%%%% PERFORM CONJUGATE GRADIENT WITH 3 LINESEARCHES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if (strcmp(algorithm,'CGD'))
             max_iter=3;
-            if epoch<6  % First update top-level weights holding other weights fixed. 
+            if epoch<holdNum  % First update top-level weights holding other weights fixed. 
                 N = size(data,1);
                 XX = [data ones(N,1)];
                 w1probs = 1./(1 + exp(-XX*w1)); w1probs = [w1probs  ones(N,1)];
@@ -184,6 +186,8 @@ for epoch = 1:maxepoch
 	toc;
 
 	save mnistclassify_weights w1 w2 w3 w_class
-	save mnistclassify_error test_err test_crerr train_err train_crerr;
+ 	save mnistclassify_error test_err test_crerr train_err train_crerr;
 
 end
+
+fprintf('%s\n', datestr(now));

@@ -25,11 +25,9 @@
 
 % results are stored in: vishid, visbiases, hidbiases
 
-maxepoch  = 100;
-epsilonw  = 0.01;   % Learning rate for weights 
-epsilonvb = 0.01;   % Learning rate for biases of visible units 
-epsilonhb = 0.01;   % Learning rate for biases of hidden units 
-
+epsilonw      = 0.1;   % Learning rate for weights 
+epsilonvb     = 0.1;   % Learning rate for biases of visible units 
+epsilonhb     = 0.1;   % Learning rate for biases of hidden units 
 weightcost  = 0.0002;   
 initialmomentum  = 0.5;
 finalmomentum    = 0.9;
@@ -55,12 +53,9 @@ if restart ==1,
     batchposhidprobs=zeros(numcases,numhid,numbatches);
 end
 
-errsumvec = zeros(1,maxepoch);
-
 for epoch = epoch:maxepoch,
     % fprintf(1,'epoch %d\r',epoch); 
     errsum=0;
-
     for batch = 1:numbatches,
         % fprintf(1,'epoch %d batch %d\r',epoch,batch); 
 
@@ -106,9 +101,7 @@ for epoch = epoch:maxepoch,
         %%%%%%%%%%%%%%%% END OF UPDATES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
     end
-    fprintf(1, 'epoch %d error %6.1f.\n', epoch, errsum);
-    errsumvec(epoch) = errsum;
-end
+    fprintf(1, 'epoch %d error %6.1f.\n', epoch, errsum); 
+end;
 
-% figure;plot(errsumvec);
 fprintf('%s \n', datestr(now));

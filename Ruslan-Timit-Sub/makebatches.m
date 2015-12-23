@@ -3,16 +3,16 @@
 % -- phone: mfcc feature, input of NN
 % -- label: speaker id, output of NN
 
-mfccFileName = 'dr1.mat';
-batchSize = 1000;
-load(mfccFileName);
+load(mfccFileName');
+
+phone = phone - min(min(phone));
+phone = phone / max(max(phone));
 
 speakerNum = max(max(max(label)));
 dimen = size(phone, 1);
 numBatch = size(phone, 2) / batchSize;
 numBatch = floor(numBatch);
 numBatchTest = ceil(numBatch/10);
-numBatchTest = 0;
 numBatchTrain = numBatch - numBatchTest;
 labelOut = zeros(speakerNum, size(phone,2));
 indexSum = 1;
