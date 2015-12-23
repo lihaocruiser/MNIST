@@ -17,9 +17,9 @@ N=numcases;
 speakerNum = size(batchtargets, 2);
 
 algorithm = 'SGD';  % CGD or SGD
-holdNum = 0;        % First update top-level weights holding other weights fixed. 
+holdNum = 5;        % First update top-level weights holding other weights fixed. 
 etaHold = 2;
-etaStart = [2 1 0.5 0.1] * 2;
+etaStart = [2 1 0.5 0.1] * 10;
 etaFinal = [2 1 0.5 0.1] / 2;
 weightcost = 0.0002;
 combineFactor = 1;
