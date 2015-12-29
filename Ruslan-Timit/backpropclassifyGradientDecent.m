@@ -5,7 +5,7 @@
 % Substitution for backpropclassify.m
 % Using mini-batch gradient decent.
 
-maxepoch = 300;
+maxepoch = 200;
 
 load mnistvhclassify
 load mnisthpclassify
@@ -19,8 +19,10 @@ speakerNum = size(batchtargets, 2);
 algorithm = 'SGD';  % CGD or SGD
 holdNum = 5;        % First update top-level weights holding other weights fixed. 
 etaHold = 2;
-etaStart = [2 1 0.5 0.1] * 10;
-etaFinal = [2 1 0.5 0.1] / 2;
+eta1 = [2 1 0.5 0.2] * 3;
+eta2 = [2 1 0.5 0.2];
+eta3 = [0.2 0.2 0.2 0.2];
+eta4 = [0.1 0.1 0.1 0.1];
 weightcost = 0.0002;
 combineFactor = 1;
 trainBatchNum = floor(numbatches / combineFactor);
@@ -36,7 +38,6 @@ w2=[hidpen; penrecbiases];
 w3=[hidpen2; penrecbiases2];
 w4 = 0.1*randn(size(w3,2)+1, speakerNum);
  
-
 %%%%%%%%%% END OF PREINITIALIZATIO OF WEIGHTS  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 l1=size(w1,1)-1;
@@ -49,11 +50,6 @@ test_err=zeros(1,maxepoch);
 train_err=zeros(1,maxepoch);
 test_crerr=zeros(1,maxepoch);
 train_crerr=zeros(1,maxepoch);
-
-% pureinc1 = zeros(trainBatchSize, size(w1,1), size(w1,2));
-% pureinc2 = zeros(trainBatchSize, size(w2,1), size(w2,2));
-% pureinc3 = zeros(trainBatchSize, size(w3,1), size(w3,2));
-% pureinc4 = zeros(trainBatchSize, size(w4,1), size(w4,2));
 
 for epoch = 1:maxepoch
 
@@ -135,12 +131,16 @@ for epoch = 1:maxepoch
                 % targetout = targetout./repmat(sum(targetout,2),1,speakerNum);
 
                 delta4 = targetout - targets;
-                w4 = w4 - etaHold / trainBatchSize * w3probs' * delta4 - etaHold * weightcost * w4;
+                w4 = w4 - etaHold * (w3probs' * delta4 / trainBatchSize + weightcost * w4);
             else
-                if (epoch<=maxepoch*0.8)
-                    eta = etaStart;
+                if (epoch<=maxepoch/4)
+                    eta = eta1;
+                elseif (epoch<=maxepoch*2/4)
+                    eta = eta2;
+                elseif (epoch<=maxepoch*3/4)
+                    eta = eta3;
                 else
-                    eta = etaFinal;
+                    eta = eta4;
                 end
                 N = size(data,1);
                 XX = [data ones(N,1)];
@@ -158,10 +158,10 @@ for epoch = 1:maxepoch
                 delta2 = delta3 * w3' .* romsigmoidy(w2probs); delta2 = delta2(:,1:end-1);
                 delta1 = delta2 * w2' .* romsigmoidy(w1probs); delta1 = delta1(:,1:end-1);
 
-                w4 = w4 - eta(4) * (w3probs' * delta4 / trainBatchSize - weightcost * w4);
-                w3 = w3 - eta(3) * (w2probs' * delta3 / trainBatchSize - weightcost * w3);
-                w2 = w2 - eta(2) * (w1probs' * delta2 / trainBatchSize - weightcost * w2);
-                w1 = w1 - eta(1) * (XX'      * delta1 / trainBatchSize - weightcost * w1);
+                w4 = w4 - eta(4) * (w3probs' * delta4 / trainBatchSize + weightcost * w4);
+                w3 = w3 - eta(3) * (w2probs' * delta3 / trainBatchSize + weightcost * w3);
+                w2 = w2 - eta(2) * (w1probs' * delta2 / trainBatchSize + weightcost * w2);
+                w1 = w1 - eta(1) * (XX'      * delta1 / trainBatchSize + weightcost * w1);
             end
         end
         %%%%%%%%%%%%%%% END OF STOCHASTIC GRADIENT DECENT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%

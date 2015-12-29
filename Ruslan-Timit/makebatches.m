@@ -18,7 +18,8 @@ labelOut = zeros(speakerNum, size(phone,2));
 indexSum = 1;
 for ii = 1:speakerNum
     num = length(find(label == 1));
-    curLabel = [zeros(ii-1, num); ones(1, num); zeros(speakerNum-ii, num)];
+    % curLabel = [zeros(ii-1, num); ones(1, num); zeros(speakerNum-ii, num)];   % set target value
+    curLabel = [0.05*ones(ii-1, num); 0.95*ones(1, num); 0.05*ones(speakerNum-ii, num)];   % set target value
     labelOut(:, indexSum:indexSum+num-1) = curLabel;
     indexSum = indexSum + num;
 end
